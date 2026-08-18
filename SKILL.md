@@ -5,7 +5,7 @@ description: 对比新旧两版 AutoCAD DWG 图纸中指定图块(摄像机、�
 
 # DWG 图块对比标记
 
-对比两版 DWG 中指定图块的位置差异,在新图副本上画分色标记圈 + 图例,输出可核验的标记图和 Word 方案。管线已在光谷四十小项目(综合楼/地下室/室外,天正+AutoCAD 2023 环境)全量验证。
+对比两版 DWG 中指定图块的位置差异,在新图副本上画分色标记圈 + 图例,输出可核验的标记图和 Word 方案。管线已在真实天正项目(综合楼/地下室/室外三组图纸,AutoCAD 2023 环境)全量验证。
 
 ## 工作流(四步,顺序执行)
 
@@ -59,7 +59,7 @@ python scripts/gen_report.py --truth work/truth.json --out xx_对比方案.docx 
 - **标记图必须核验通过后才能交付**。
 - `--spec` 的 tag 必须与 `--map` 的 tag 对应;dwg_mark 与 dwg_verify 的 `--spec/--old-label/--radius` 必须完全一致。
 - 疑似移位对(dwg_compare 打印 ⚠ 行)要在最终回复与文档里单独列出,供设计确认,不要擅自归类。
-- 输出目录: 标记图与 docx 放用户指定目录(通常为新图所在目录),truth JSON 与 scratch 放工作目录(默认 `C:\Users\hwdem\dwg_work`)。
+- 输出目录: 标记图与 docx 放用户指定目录(通常为新图所在目录),truth JSON 与 scratch 放工作目录(默认 `~/dwg_work`)。
 
 ## 报错排障
 

@@ -194,7 +194,7 @@ def main():
     ap.add_argument("--map", required=True,
                     help="块名=标签 映射,分号分隔,如 \"枪式摄像机=gun;A$C5BEE1828=dome\"")
     ap.add_argument("--out", required=True, help="输出 JSON 路径")
-    ap.add_argument("--work", default=r"C:\Users\hwdem\dwg_work", help="临时目录")
+    ap.add_argument("--work", default=os.path.expanduser("~/dwg_work"), help="临时目录")
     ap.add_argument("--acad-exe", default=r"D:\Program Files\AutoCAD 2023\AutoCAD 2023\acad.exe",
                     help="acad.exe 路径(COM 不可用时直接启动)")
     args = ap.parse_args()

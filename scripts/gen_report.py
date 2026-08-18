@@ -5,7 +5,8 @@
   python gen_report.py --truth truth.json --out 方案.docx \
       --spec "gun=枪式摄像机;sph=球机" --title 室外弱电总平面图 \
       --old-dwg 室外弱电总平面图20260325.dwg --new-dwg 室外弱电总平面图20260604.dwg \
-      --mark-file 室外弱电总平面图20260604_摄像机对比标记.dwg --radius 600
+      --mark-file 室外弱电总平面图20260604_摄像机对比标记.dwg --radius 600 \
+      [--project "xx项目弱电深化设计"]
 """
 import argparse
 import json
@@ -48,6 +49,7 @@ def main():
     ap.add_argument("--old-dwg", required=True)
     ap.add_argument("--new-dwg", required=True)
     ap.add_argument("--mark-file", required=True, help="标记图文件名")
+    ap.add_argument("--project", default="DWG 图块对比方案", help="文档副标题项目名")
     ap.add_argument("--radius", type=float, default=600)
     args = ap.parse_args()
 
@@ -97,7 +99,7 @@ def main():
              size=20, bold=True)
     s = doc.add_paragraph()
     s.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    set_font(s.add_run(f"光谷四十小弱电深化设计项目 · {date.today().isoformat()}"),
+    set_font(s.add_run(f"{args.project} · {date.today().isoformat()}"),
              size=11, color=(0x66, 0x66, 0x66))
 
     h("一、编制目的", 1)
