@@ -90,6 +90,40 @@ def main():
         lay = com_retry(doc.Layers.Add, lname)
         com_retry(lambda l=lay, c=color: setattr(l, "Color", c))
 
+    def purge_layer(lname):
+        """清掉底图上同名标记图层的残留图元(源图人工编辑可能带入,会污染核验计数)"""
+        for _ in range(5):
+            try:
+                ex = com_retry(doc.SelectionSets.Item, "SS_PURGE")
+                com_retry(ex.Delete)
+            except Exception:
+                pass
+            try:
+                ss = com_retry(doc.SelectionSets.Add, "SS_PURGE")
+                break
+            except pythoncom.com_error:
+                time.sleep(1)
+        else:
+            return 0
+        fc = win32com.client.VARIANT(pythoncom.VT_I2 | pythoncom.VT_ARRAY, [8])
+        fv = win32com.client.VARIANT(pythoncom.VT_VARIANT | pythoncom.VT_ARRAY, [lname])
+        com_retry(lambda: ss.Select(5, None, None, fc, fv))
+        ents = [com_retry(ss.Item, k) for k in range(com_retry(lambda: ss.Count))]
+        com_retry(ss.Delete)
+        removed = 0
+        for e in ents:
+            try:
+                com_retry(e.Delete)
+                removed += 1
+            except Exception:
+                pass
+        return removed
+
+    for key, (lname, _) in layers.items():
+        n = purge_layer(lname)
+        if n:
+            print(f"  清理图层残留: {lname} 删除 {n} 个图元")
+
     all_pts = []
     for tag, cname in names.items():
         g = truth[tag]

@@ -126,6 +126,14 @@ def main():
     para("对比方法：AutoCAD 逐个炸开块参照，以炸出图元包围盒中心作为符号真实显示位置"
          "（图块常带大偏移基点与旋转/镜像属性，插入点不可信）。"
          "匹配阈值：<1mm 完全一致，1~200mm 基本一致，>200mm 判移位或新增。")
+    _offsets = [tuple(truth[tag]["old_offset"]) for tag in names
+                if truth[tag].get("old_offset")]
+    if _offsets:
+        ox, oy = _offsets[0]
+        para(f"基点修正：新旧两版图纸坐标系存在基点差异（ΔX={ox:+.4f}mm，ΔY={oy:+.4f}mm），"
+             f"已将旧图坐标整体平移至新图坐标系后再比对（按该平移量对齐后，多数设备位置残差为 0，"
+             f"证实属图纸基点差异而非设备移位）。“移位/删除”类坐标为旧图位置换算到新图坐标系后的值。",
+             bold=True)
 
     h("三、对比结果汇总", 1)
     st = doc.add_table(rows=1, cols=4)

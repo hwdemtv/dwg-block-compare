@@ -195,6 +195,9 @@ def main():
                     help="块名=标签 映射,分号分隔,如 \"枪式摄像机=gun;A$C5BEE1828=dome\"")
     ap.add_argument("--out", required=True, help="输出 JSON 路径")
     ap.add_argument("--work", default=os.path.expanduser("~/dwg_work"), help="临时目录")
+    ap.add_argument("--old-offset", default=None,
+                    help="旧图基点修正 dx,dy(mm): 两版图纸坐标系/基点不一致时,"
+                         "把旧图炸开坐标整体平移到新图坐标系后再匹配,如 \"-207.5866,9.8875\"")
     ap.add_argument("--acad-exe", default=r"D:\Program Files\AutoCAD 2023\AutoCAD 2023\acad.exe",
                     help="acad.exe 路径(COM 不可用时直接启动)")
     args = ap.parse_args()
@@ -208,10 +211,19 @@ def main():
     acad = attach_acad(args.acad_exe)
     close_scratch_docs(acad)
 
+    old_offset = None
+    if args.old_offset:
+        dx, dy = [float(v) for v in args.old_offset.split(",")]
+        old_offset = [dx, dy]
+
     result = {}
     for block, tag in blocks.items():
         old = explode_positions(acad, args.old, args.work, block, "old")
         new = explode_positions(acad, args.new, args.work, block, "new")
+        if old_offset:
+            print(f"  [基点修正] 旧图坐标平移 ({old_offset[0]:+.4f}, {old_offset[1]:+.4f})mm 后匹配")
+            for r in old:
+                r["disp"] = [r["disp"][0] + old_offset[0], r["disp"][1] + old_offset[1]]
         exact, near, old_only, new_only = match(old, new)
         print(f"\n=== [{tag}] {block}: 旧{len(old)} 新{len(new)} ===")
         print(f"完全一致 {len(exact)} | 微调 {len(near)} | 移位/删除 {len(old_only)} | 新增 {len(new_only)}")
@@ -227,6 +239,7 @@ def main():
         result[tag] = {
             "block": block,
             "old": old, "new": new,
+            "old_offset": old_offset,
             "exact": [list(p) for p in exact],
             "near": [list(p) for p in near],
             "old_only": [list(p) for p in old_only],

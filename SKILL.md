@@ -18,6 +18,7 @@ python scripts/dwg_compare.py --old 旧图.dwg --new 新图.dwg \
 
 - `--map` 为 块名=标签,分号分隔;中文块名与匿名块(`A$C…`)都支持。块名不确定时先在 CAD 里 `LI` 查,或问用户。
 - 自动: 附着/启动 AutoCAD、清理残留 scratch 文档、临时副本炸开取真实位置、匹配、闭环断言、疑似移位对提示。
+- **基点修正 `--old-offset=dx,dy`**: 两版图纸坐标系/基点不一致时(识别信号: 疑似移位对里大量距离完全相同且方向一致),先算共识偏移向量(每个旧点取最近新点向量取众数,残差应≈0),再平移旧图坐标重跑对比。**负值必须用 `=` 连接**(如 `--old-offset=-207.5866,9.8875`),否则 argparse 当成选项。truth JSON 会记录 `old_offset`,gen_report.py 自动写注记。
 - 控制台会打印各类数量与"建议圈半径≈对角线中位/2+250"——**记下这个数,第 2 步要用**。
 
 分类口径: <1mm 完全一致(exact) / 1~200mm 基本一致(near) / >200mm 移位或删除(old_only)与新增(new_only)。200~500mm 的对不消耗配额,两侧分别归类。
@@ -32,7 +33,8 @@ python scripts/dwg_mark.py --new-dwg 新图.dwg \
 
 - `--radius`: 综合/常规 600,符号大的(如地下室 diag≈947)用 750;参考第 1 步打印的建议值。
 - `--old-label` 用旧版日期号,进图层名。
-- 每设备 4 图层: 红(1)一致、黄(2)微调、绿(3)新增、蓝(5)+叉 旧有新无(画在旧图原位置);图例按内容坐标范围放在真实内容正上方。
+- 画标记前会自动清掉底图上同名"标记-*"图层的残留图元(源图被人工编辑带入的圈/线会污染核验计数),清理量会打印。
+- 每设备 4 图层: 红(1)一致、黄(2)微调、绿(3)新增、蓝(5)+叉 旧有新无(画在旧图原位置;用过 `--old-offset` 时是换算到新图坐标系的位置);图例按内容坐标范围放在真实内容正上方。
 
 ### 3. 核验(必须跑,全绿才算完)
 
@@ -58,9 +60,9 @@ python scripts/gen_report.py --truth work/truth.json --out xx_对比方案.docx 
 - **位置一律用炸开真值**(dwg_compare.py 已实现),绝不用 InsertionPoint——本项目块基点偏移 ~161000mm 且带旋转/镜像。
 - **标记图必须核验通过后才能交付**。
 - `--spec` 的 tag 必须与 `--map` 的 tag 对应;dwg_mark 与 dwg_verify 的 `--spec/--old-label/--radius` 必须完全一致。
-- 疑似移位对(dwg_compare 打印 ⚠ 行)要在最终回复与文档里单独列出,供设计确认,不要擅自归类。
+- 疑似移位对(dwg_compare 打印 ⚠ 行)要在最终回复与文档里单独列出,供设计确认,不要擅自归类。若大量 ⚠ 行距离完全相同且方向一致,先怀疑**两版图纸基点/坐标系不一致**,按共识偏移向量用 `--old-offset` 修正后重跑,而不是把整图设备都报成移位。
 - 输出目录: 标记图与 docx 放用户指定目录(通常为新图所在目录),truth JSON 与 scratch 放工作目录(默认 `~/dwg_work`)。
 
 ## 报错排障
 
-报 com_error / AttributeError / CLASSNOTREG / "服务器运行失败" / PermissionError 时,**先读 [references/pitfalls.md](references/pitfalls.md)**——天正+AutoCAD COM 环境的 9 类坑与修法(gen_py 缓存删除、COM 重试、acad.exe 崩溃恢复路径、scratch 锁文件、选择集残留、匹配闭环、EXTMAX 天边图例等)都在里面,勿重新发明。
+报 com_error / AttributeError / CLASSNOTREG / "服务器运行失败" / PermissionError 时,**先读 [references/pitfalls.md](references/pitfalls.md)**——天正+AutoCAD COM 环境的 12 类坑与修法(gen_py 缓存删除、COM 重试、acad.exe 崩溃恢复路径、scratch 锁文件、选择集残留、匹配闭环、EXTMAX 天边图例、基点偏移修正、标记图层残留清理、lambda 整体重试等)都在里面,勿重新发明。

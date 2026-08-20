@@ -89,7 +89,7 @@ def main():
         }
 
     acad = win32com.client.GetActiveObject("AutoCAD.Application")
-    doc = com_retry(acad.Documents.Open, args.mark_dwg, True)
+    doc = com_retry(lambda: acad.Documents.Open(args.mark_dwg, True))
     time.sleep(3)
     print(f"打开(只读): {doc.Name}")
 
@@ -100,7 +100,7 @@ def main():
             ss = new_ss(doc, f"SS_V{abs(hash((tag, tkey))) % 100000}")
             fc = win32com.client.VARIANT(pythoncom.VT_I2 | pythoncom.VT_ARRAY, [8])
             fv = win32com.client.VARIANT(pythoncom.VT_VARIANT | pythoncom.VT_ARRAY, [lname])
-            com_retry(ss.Select, 5, None, None, fc, fv)
+            com_retry(lambda s=ss: s.Select(5, None, None, fc, fv))
             circles, lines = [], 0
             for k in range(com_retry(lambda: ss.Count)):
                 e = com_retry(ss.Item, k)

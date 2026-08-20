@@ -46,3 +46,16 @@
 - ezdxf 求包围盒用 `ezdxf.bbox.extents(entities)`,不是实体方法;ezdxf 处理不了天正对象较多的图时退回 COM 法。
 - 截被遮挡窗口: `ctypes PrintWindow(hwnd, hdc, 2)`;BMP 需 PIL 转 PNG 才能被图像分析工具读。
 - 打开文档后 `time.sleep(3)` 再操作;`Open` 本身也要 15 次重试。
+
+## 10. 两版图纸基点/坐标系不一致 → --old-offset 修正
+- 直接按绝对坐标对比会把全部设备误判成"移位+新增"(旧40新43 曾报 0/0/40/43)。
+- **识别信号**: 疑似移位对里大量距离完全相同、方向一致(如 37 对全部 208mm)。
+- **正解**: 对每个 old 点取最近 new 点的向量,取众数即共识偏移(残差应≈0);`dwg_compare.py --old-offset=dx,dy` 平移旧坐标后再匹配。**负值必须用 `=` 连接**(如 `--old-offset=-207.5866,9.8875`),否则 argparse 当选项。truth JSON 会记录 `old_offset`,gen_report.py 自动写基点修正注记。
+
+## 11. 源图含"标记-*"图层残留图元 → 污染核验计数
+- 用户手工编辑过的源 DWG 可能已在标记图层上画过圈/线,复制进标记图后 verify 报"圈 N≠期望 M、叉线 K≠期望 2M"。
+- **正解**: dwg_mark.py 画标记前按图层 Select+Delete 清残留(已内置,会打印"清理图层残留")。排查: 探针脚本按图层列圈心与 truth 求差;注意 Python 连续两次 round 有银行家舍入假阳性,比对用一次舍入+容差。
+
+## 12. com_retry(obj.Method, args) 属性获取在 try 之外
+- `com_retry(ss.Select, ...)` 先求值 `ss.Select`,瞬时代理故障的 AttributeError 发生在进入 com_retry 前,照样崩。
+- **正解**: `com_retry(lambda: ss.Select(...))`,属性获取+调用放进同一个 lambda 整体重试。

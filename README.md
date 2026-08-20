@@ -32,6 +32,8 @@ pip install pywin32 python-docx
 # 1. 对比 → truth.json(自动炸开取真值、匹配、断言闭环)
 python scripts/dwg_compare.py --old 旧图.dwg --new 新图.dwg \
   --map "枪式摄像机=gun;A$C69077507=sph" --out truth.json
+#   两版图纸基点/坐标系不一致时,按共识偏移向量修正后重跑(负值必须用 = 连接):
+# python scripts/dwg_compare.py ... --old-offset=-207.5866,9.8875 --out truth.json
 
 # 2. 在新图副本上画分色标记 + 图例
 python scripts/dwg_mark.py --new-dwg 新图.dwg --mark-dwg 标记图.dwg \
@@ -51,12 +53,12 @@ python scripts/gen_report.py --truth truth.json --out 方案.docx \
 
 | 脚本 | 作用 |
 |---|---|
-| `scripts/dwg_compare.py` | 炸开真值法取符号真实位置 + 一对一匹配(闭环断言、疑似移位对提示、AutoCAD 自动拉起) |
-| `scripts/dwg_mark.py` | 新图副本上画分色标记圈 + 叉 + 数据驱动图例(不用 EXTMAX,避开杂散图元) |
+| `scripts/dwg_compare.py` | 炸开真值法取符号真实位置 + 一对一匹配(闭环断言、疑似移位对提示、`--old-offset` 两版基点/坐标系差异修正、AutoCAD 自动拉起) |
+| `scripts/dwg_mark.py` | 新图副本上画分色标记圈 + 叉 + 数据驱动图例(不用 EXTMAX,避开杂散图元;画前自动清理底图同名标记图层残留) |
 | `scripts/dwg_verify.py` | 逐图层核验圈数/半径/圈心配对(0.5mm 容差)/叉线数量 |
-| `scripts/gen_report.py` | 生成带坐标表的 Word 对比方案 |
+| `scripts/gen_report.py` | 生成带坐标表的 Word 对比方案(含基点修正自动注记) |
 
-`references/pitfalls.md` 收录了 AutoCAD COM + 天正($TCHSYS$)环境的 9 类坑:gen_py 早绑定缓存污染、RPC 拒绝重试、ModelSpace.Item 不可用、acad.exe 崩溃恢复路径、scratch 文件锁、匹配闭环、EXTMAX 天边图例等——做 AutoCAD COM 自动化的人都用得上。
+`references/pitfalls.md` 收录了 AutoCAD COM + 天正($TCHSYS$)环境的 12 类坑:gen_py 早绑定缓存污染、RPC 拒绝重试、ModelSpace.Item 不可用、acad.exe 崩溃恢复路径、scratch 文件锁、匹配闭环、EXTMAX 天边图例、两版图纸基点偏移修正、源图标记图层残留清理、COM 属性获取需整体 lambda 重试等——做 AutoCAD COM 自动化的人都用得上。
 
 ## 作为 Claude Code 技能使用
 
